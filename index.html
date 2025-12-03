@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Energy-Efficient CPU Scheduling</title>
+
+<style>
+*{box-sizing:border-box;font-family:"Segoe UI",system-ui,sans-serif;}
+body{margin:0;background:linear-gradient(135deg,#020617,#0f172a);color:#e5e7eb;}
+.container{max-width:1200px;margin:auto;padding:25px;}
+.card{
+  background:#020617;
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 0 35px rgba(56,189,248,.18);
+  margin-bottom:24px;
+}
+h1{text-align:center;color:#38bdf8;margin-bottom:6px;}
+.subtitle{text-align:center;color:#94a3b8;font-size:14px;margin-bottom:22px;}
+h2{color:#a5f3fc;margin-bottom:10px;}
+h3{color:#7dd3fc;margin-bottom:6px;}
+p,li{font-size:14px;line-height:1.7;color:#e5e7eb;}
+ul{padding-left:20px;}
+
+.flex{display:flex;gap:12px;flex-wrap:wrap;}
+.field{flex:1;min-width:150px;}
+label{font-size:13px;color:#cbd5f5;}
+input{
+  width:100%;
+  padding:8px 10px;
+  border-radius:10px;
+  border:none;
+  background:#020617;
+  color:#e5e7eb;
+  outline:1px solid #334155;
+}
+button{
+  padding:8px 16px;
+  border-radius:999px;
+  border:none;
+  font-size:14px;
+  cursor:pointer;
+}
+.primary{background:#2563eb;color:white;}
+.secondary{background:#334155;color:white;}
+.danger{background:#dc2626;color:white;}
+
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border-bottom:1px solid #334155;padding:9px;text-align:center;font-size:14px;}
+th{background:#020617;color:#7dd3fc;}
+
+.badge{
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:600;
+}
+.high{background:#7f1d1d;color:#fecaca;}
+.medium{background:#78350f;color:#fde68a;}
+.low{background:#14532d;color:#bbf7d0;}
+
+.summary{display:flex;gap:12px;flex-wrap:wrap;}
+.summary .box{
+  flex:1;
+  background:#020617;
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+}
+.green{border:1px solid #22c55e;}
+
+.footer{text-align:center;font-size:13px;color:#94a3b8;}
+.highlight{color:#38bdf8;font-weight:600;}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Energy-Efficient CPU Scheduling</h1>
+<div class="subtitle">Dark Theme | Working Project with Theory + Simulation</div>
+
+<!-- THEORY CONTENT -->
+<div class="card">
+<h2>📘 What is Energy-Efficient CPU Scheduling?</h2>
+<p>
+Energy-efficient CPU scheduling is a technique where the CPU decides 
+<span class="highlight">which process to execute</span> and 
+<span class="highlight">at what speed</span> so that energy consumption is reduced
+without affecting important tasks.
+</p>
+<p>
+This is very important in <b>mobile phones, laptops, and embedded systems</b>,
+where battery life is limited.
+</p>
+</div>
+
+<div class="card">
+<h2>⚙️ Why CPU Scheduling Affects Energy</h2>
+<p>
+CPU power consumption mainly depends on its operating speed:
+</p>
+<ul>
+<li><span class="badge high">HIGH</span> Speed → More voltage → High energy usage</li>
+<li><span class="badge medium">MEDIUM</span> Speed → Balanced energy and performance</li>
+<li><span class="badge low">LOW</span> Speed → Less voltage → Low energy usage</li>
+</ul>
+<p>
+If the CPU runs at high speed all the time, energy is wasted even when workload is low.
+</p>
+</div>
+
+<div class="card">
+<h2>🔋 How Our Scheduling Algorithm Saves Energy</h2>
+<ul>
+<li>Important processes are executed first using <b>priority-based scheduling</b></li>
+<li>CPU speed is adjusted based on number of remaining processes</li>
+<li>High speed is used only when workload is high</li>
+<li>Low speed is used when workload is small</li>
+<li>This reduces unnecessary CPU power usage</li>
+</ul>
+</div>
+
+<div class="card">
+<h2>📱 Real-Life Example</h2>
+<p>
+This behavior is commonly seen in smartphones:
+</p>
+<ul>
+<li>Gaming / Video call → CPU runs fast</li>
+<li>Reading / Background apps → CPU slows down</li>
+<li>Phone idle → CPU enters sleep mode</li>
+</ul>
+<p>
+Our project simulates this same behavior in a simple educational way.
+</p>
+</div>
+
+<!-- ADD PROCESS -->
+<div class="card">
+<h2>➕ Add Process</h2>
+<div class="flex">
+  <div class="field">
+    <label>Process ID</label>
+    <input id="pid">
+  </div>
+  <div class="field">
+    <label>Burst Time</label>
+    <input type="number" id="burst">
+  </div>
+  <div class="field">
+    <label>Priority (lower = higher)</label>
+    <input type="number" id="priority">
+  </div>
+</div>
+<br>
+<button class="primary" onclick="addProcess()">Add</button>
+<button class="secondary" onclick="clearAll()">Clear</button>
+</div>
+
+<!-- PROCESS TABLE -->
+<div class="card">
+<h2>📋 Process Table</h2>
+<div id="processTable"></div>
+</div>
+
+<!-- RUN -->
+<div class="card">
+<h2>▶ Run Scheduling Simulation</h2>
+<button class="primary" onclick="runScheduling()">Run Simulation</button>
+<div id="resultTable"></div>
+<div id="energySummary" style="margin-top:16px;"></div>
+</div>
+
+<div class="footer">
+Energy-Efficient CPU Scheduling | OS Project | Vaibhav · Lucky · Navneet
+</div>
+
+</div>
+
+<script>
+let processes = [];
+
+function renderProcessTable(){
+  const table = document.getElementById("processTable");
+  if(processes.length === 0){
+    table.innerHTML = "No processes added yet.";
+    return;
+  }
+  let html = `<table>
+  <tr><th>#</th><th>ID</th><th>Burst</th><th>Priority</th><th>Remove</th></tr>`;
+  processes.forEach((p,i)=>{
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${p.id}</td>
+      <td>${p.burst}</td>
+      <td>${p.priority}</td>
+      <td><button class="danger" onclick="removeProcess(${i})">X</button></td>
+    </tr>`;
+  });
+  html += "</table>";
+  table.innerHTML = html;
+}
+
+function addProcess(){
+  const id = document.getElementById("pid").value.trim();
+  const burst = parseInt(document.getElementById("burst").value);
+  const priority = parseInt(document.getElementById("priority").value);
+
+  if(!id || isNaN(burst) || isNaN(priority) || burst <= 0 || priority <= 0){
+    alert("Please enter valid process details!");
+    return;
+  }
+  processes.push({id, burst, priority});
+  pid.value = burst.value = priority.value = "";
+  renderProcessTable();
+}
+
+function removeProcess(i){
+  processes.splice(i,1);
+  renderProcessTable();
+}
+
+function clearAll(){
+  processes=[];
+  document.getElementById("processTable").innerHTML="";
+  document.getElementById("resultTable").innerHTML="";
+  document.getElementById("energySummary").innerHTML="";
+}
+
+function runScheduling(){
+  if(processes.length === 0){
+    alert("Add processes first!");
+    return;
+  }
+
+  const sorted = [...processes].sort((a,b)=>a.priority-b.priority);
+  let remaining = sorted.length;
+  let totalBurst = sorted.reduce((s,p)=>s+p.burst,0);
+  let normalEnergy = totalBurst * 3;
+  let proposedEnergy = 0;
+
+  let html = `<table>
+  <tr>
+    <th>Order</th><th>Process</th><th>Burst</th><th>Priority</th>
+    <th>CPU Speed</th><th>Power</th><th>Energy</th>
+  </tr>`;
+
+  sorted.forEach((p,i)=>{
+    let speed,power,cls;
+    if(remaining >= 4){speed="HIGH";power=3;cls="high";}
+    else if(remaining >= 2){speed="MEDIUM";power=2;cls="medium";}
+    else{speed="LOW";power=1;cls="low";}
+    let energy = p.burst * power;
+    proposedEnergy += energy;
+    html += `<tr>
+      <td>${i+1}</td>
+      <td>${p.id}</td>
+      <td>${p.burst}</td>
+      <td>${p.priority}</td>
+      <td><span class="badge ${cls}">${speed}</span></td>
+      <td>${power}</td>
+      <td>${energy}</td>
+    </tr>`;
+    remaining--;
+  });
+
+  html += "</table>";
+  resultTable.innerHTML = html;
+
+  energySummary.innerHTML = `
+  <div class="summary">
+    <div class="box"><b>Total Burst</b><br>${totalBurst}</div>
+    <div class="box"><b>Normal Energy</b><br>${normalEnergy}</div>
+    <div class="box green"><b>Proposed Energy</b><br>${proposedEnergy}</div>
+    <div class="box"><b>Energy Saved</b><br>${normalEnergy - proposedEnergy}</div>
+  </div>`;
+}
+</script>
+
+</body>
+</html>
